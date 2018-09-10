@@ -29,6 +29,9 @@ static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 
+/* List for containing sleeping threads */
+struct list sleeping_thread;
+
 /* Sets up the 8254 Programmable Interval Timer (PIT) to
    interrupt PIT_FREQ times per second, and registers the
    corresponding interrupt. */
@@ -44,6 +47,8 @@ timer_init (void)
   outb (0x40, count >> 8);
 
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+
+  list_init( &sleeping_thread ); /* initialize sleeping_thread */
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -92,15 +97,44 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
+/* This function is newly defined */
+/* Awaking sleeping thread when the specific ticks has passed */
+void timer_awake (int64_t ticks){
+
+  struct list_elem *e;
+
+  for ( e = list_begin(&sleeping_thread); e != list_end(&sleeping_thread); 
+        e = list_next(e) )
+    {
+    struct thread *t = list_entry(e, struct thread, elem);
+
+    if(t->sleep_time <= ticks)
+    {
+      thread_unblock(t);
+      list_remove(e);
+    }
+  }
+}
+
 /* Suspends execution for approximately TICKS timer ticks. */
 void
 timer_sleep (int64_t ticks) 
 {
   int64_t start = timer_ticks ();
+  struct thread * t = thread_current();
 
-  ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+  enum intr_level old_level = intr_disable();
+  if( ticks > 0 )
+  {
+    t->sleep_time = start + ticks;
+    list_push_front( &sleeping_thread, &(t->elem) ); //put t into sleeping thread list
+    thread_block();
+  }
+
+  intr_set_level(old_level);
+  // ASSERT (intr_get_level () == INTR_ON);
+  // while (timer_elapsed (start) < ticks) 
+  //   thread_yield ();
 }
 
 /* Suspends execution for approximately MS milliseconds. */
@@ -136,6 +170,7 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
+  timer_awake(ticks); //to check whether sleeping thread should be wake or not
   thread_tick ();
 }
 
