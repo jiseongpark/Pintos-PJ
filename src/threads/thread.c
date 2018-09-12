@@ -71,6 +71,8 @@ static void schedule (void);
 void schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
+
+
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
    general and it is possible in this case only because loader.S
@@ -466,7 +468,27 @@ next_thread_to_run (void)
   if (list_empty (&ready_list))
     return idle_thread;
   else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);
+  {
+    struct list_elem *e = list_begin(&ready_list);
+    struct list_elem *temp_e = list_begin(&ready_list);
+    struct thread *next_thread = list_entry(list_begin(&ready_list), struct thread, elem);
+
+
+    for( ; e != list_end(&ready_list); e = list_next(e))
+    {
+      struct thread *temp_t = list_entry(e, struct thread, elem);
+
+      if(temp_t->priority > next_thread->priority)
+      {
+        next_thread = temp_t;
+        temp_e = e;
+      }
+    }
+    list_remove(temp_e);
+    //ASSERT(next_thread->priority != 31);
+    return next_thread;
+    //return list_entry (list_pop_front (&ready_list), struct thread, elem);
+  }
 }
 
 /* Completes a thread switch by activating the new thread's page
@@ -535,7 +557,7 @@ schedule (void)
 
   if (curr != next)
     prev = switch_threads (curr, next);
-  schedule_tail (prev); 
+  schedule_tail (prev);
 }
 
 /* Returns a tid to use for a new thread. */

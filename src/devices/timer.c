@@ -103,17 +103,20 @@ void timer_awake (int64_t ticks){
 
   struct list_elem *e;
 
-  for ( e = list_begin(&sleeping_thread); e != list_end(&sleeping_thread); 
-        e = list_next(e) )
-    {
+  for ( e = list_begin(&sleeping_thread); e != list_end(&sleeping_thread); )
+  {
     struct thread *t = list_entry(e, struct thread, elem);
 
     if(t->sleep_time <= ticks)
     {
+      e = list_remove(e);
       thread_unblock(t);
-      list_remove(e);
+      continue;
     }
+
+    e = list_next(e);
   }
+
 }
 
 /* Suspends execution for approximately TICKS timer ticks. */
