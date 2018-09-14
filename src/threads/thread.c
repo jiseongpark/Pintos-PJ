@@ -469,26 +469,43 @@ next_thread_to_run (void)
     return idle_thread;
   else
   {
-    struct list_elem *e = list_begin(&ready_list);
-    struct list_elem *temp_e = list_begin(&ready_list);
-    struct thread *next_thread = list_entry(list_begin(&ready_list), struct thread, elem);
+    // struct list_elem *e = list_begin(&ready_list);  /* Iteration pointer */  
+    // struct list_elem *temp_e = list_begin(&ready_list);  /* Saved high priority element */
+    // struct thread *next_thread = list_entry(list_begin(&ready_list), struct thread, elem);  /* Saved high priority thread */
 
+    // /* Iterating loop, update next_thread, temp_e with higher priority */
+    // for( ; e != list_end(&ready_list); e = list_next(e))
+    // {
+    //   struct thread *temp_t = list_entry(e, struct thread, elem);
 
-    for( ; e != list_end(&ready_list); e = list_next(e))
-    {
-      struct thread *temp_t = list_entry(e, struct thread, elem);
+    //   if(temp_t->priority > next_thread->priority)
+    //   {
+    //     next_thread = temp_t;
+    //     temp_e = e;
+    //   }
+    // }
 
-      if(temp_t->priority > next_thread->priority)
-      {
-        next_thread = temp_t;
-        temp_e = e;
-      }
-    }
-    list_remove(temp_e);
-    //ASSERT(next_thread->priority != 31);
+    // /* Remove next thread to run from the ready list */
+    // list_remove(temp_e);
+
+    // return next_thread;
+    
+    struct list_elem *e = list_max(&ready_list, compare_priority, NULL);    
+    struct thread *next_thread = list_entry(e, struct thread, elem);    
+    list_remove(e);
+
+    //list_remove(e);
     return next_thread;
+
     //return list_entry (list_pop_front (&ready_list), struct thread, elem);
   }
+}
+
+bool compare_priority(struct list_elem* max, struct list_elem* e, void* aux){
+  int maximum = list_entry(max, struct thread,elem)->priority;
+  int current = list_entry(e, struct thread, elem)->priority;
+  if(maximum < current) return true;
+  else return false;
 }
 
 /* Completes a thread switch by activating the new thread's page
@@ -550,7 +567,7 @@ schedule (void)
   struct thread *curr = running_thread ();
   struct thread *next = next_thread_to_run ();
   struct thread *prev = NULL;
-
+    
   ASSERT (intr_get_level () == INTR_OFF);
   ASSERT (curr->status != THREAD_RUNNING);
   ASSERT (is_thread (next));

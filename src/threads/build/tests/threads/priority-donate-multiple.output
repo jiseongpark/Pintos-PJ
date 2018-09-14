@@ -1,10 +1,10 @@
-Writing command line to /tmp/VhJ9PK2niX.dsk...
+Writing command line to /tmp/W02TPeIh92.dsk...
 warning: can't find squish-pty, so terminal input will fail
 bochs -q
 Kernel command line: -q run priority-donate-multiple
 Pintos booting with 4,096 kB RAM...
 375 pages available in kernel pool.
-374 pages available in user pool.
+375 pages available in user pool.
 Calibrating timer...  204,600 loops/s.
 Boot complete.
 Executing 'priority-donate-multiple':

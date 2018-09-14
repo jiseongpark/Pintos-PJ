@@ -100,7 +100,7 @@ struct thread
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
 
-    int64_t sleep_time;                 /* Number of ticks to sleep */
+    int64_t sleep_time;                 /* Saved time to wake up */
 
   };
 
@@ -135,5 +135,7 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+bool compare_priority(struct list_elem* max,struct list_elem* e, void* aux);
 
 #endif /* threads/thread.h */
