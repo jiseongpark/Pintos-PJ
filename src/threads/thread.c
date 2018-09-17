@@ -200,7 +200,9 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
-
+  if(priority > thread_current()->priority)
+    thread_yield();
+  
   return tid;
 }
 
@@ -441,6 +443,7 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
+  t->actual_priority = priority;
   t->magic = THREAD_MAGIC;
 }
 
@@ -494,7 +497,6 @@ next_thread_to_run (void)
     struct thread *next_thread = list_entry(e, struct thread, elem);    
     list_remove(e);
 
-    //list_remove(e);
     return next_thread;
 
     //return list_entry (list_pop_front (&ready_list), struct thread, elem);
@@ -502,10 +504,7 @@ next_thread_to_run (void)
 }
 
 bool compare_priority(struct list_elem* max, struct list_elem* e, void* aux){
-  int maximum = list_entry(max, struct thread,elem)->priority;
-  int current = list_entry(e, struct thread, elem)->priority;
-  if(maximum < current) return true;
-  else return false;
+  return list_entry(max, struct thread,elem)->priority < list_entry(e, struct thread, elem)->priority;
 }
 
 /* Completes a thread switch by activating the new thread's page
@@ -575,6 +574,7 @@ schedule (void)
   if (curr != next)
     prev = switch_threads (curr, next);
   schedule_tail (prev);
+ 
 }
 
 /* Returns a tid to use for a new thread. */

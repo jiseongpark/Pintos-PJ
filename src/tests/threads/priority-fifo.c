@@ -64,10 +64,11 @@ test_priority_fifo (void)
     }
 
   thread_set_priority (PRI_DEFAULT);
+
   /* All the other threads now run to termination here. */
   ASSERT (lock.holder == NULL);
-
   cnt = 0;
+
   for (; output < op; output++) 
     {
       struct simple_thread_data *d;
