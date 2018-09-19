@@ -228,22 +228,11 @@ lock_acquire (struct lock *lock)
 
   if(lock->holder != NULL){
        
-    // struct list_elem *e = list_max(&(lock->semaphore.waiters), compare_priority, NULL);
     int cur_priority = thread_current()->priority;
-    // int max_priority = list_entry(e, struct thread, elem)->priority;
-    
-    // if(!list_empty(&(lock->semaphore.waiters)))
+    // if (list_size(&lock->semaphore.waiters) > 1)
     // {
-     
-    //   if( thread_get_priority() < max_priority )
-    //   {
-
-    //     thread_current()->priority = max_priority;
-
-
-    //   }
-
-      
+    //  struct list_elem * e = list_max(&lock->semaphore.waiters,compare_priority, NULL);
+    //  cur_priority = list_entry(e, struct thread, elem)->priority;      
     // }
     if(lock->holder->priority < cur_priority){
       lock->holder->actual_priority = lock->holder->priority;
