@@ -226,28 +226,36 @@ lock_acquire (struct lock *lock)
 
   enum intr_level old_level = intr_disable();
 
-  sema_down (&(lock->semaphore));
-  lock->holder = thread_current ();   
-  struct list_elem *e = list_max(&(lock->semaphore.waiters), compare_priority, NULL);
-  int cur_priority = thread_current()->priority;
-  int max_priority = list_entry(e, struct thread, elem)->priority;
-  
-  if(!list_empty(&(lock->semaphore.waiters)))
-  {
-   
-    if( thread_get_priority() < max_priority )
-    {
-
-      thread_current()->priority = max_priority;
-
-
-    }
-
+  if(lock->holder != NULL){
+       
+    // struct list_elem *e = list_max(&(lock->semaphore.waiters), compare_priority, NULL);
+    int cur_priority = thread_current()->priority;
+    // int max_priority = list_entry(e, struct thread, elem)->priority;
     
+    // if(!list_empty(&(lock->semaphore.waiters)))
+    // {
+     
+    //   if( thread_get_priority() < max_priority )
+    //   {
+
+    //     thread_current()->priority = max_priority;
+
+
+    //   }
+
+      
+    // }
+    if(lock->holder->priority < cur_priority){
+      lock->holder->actual_priority = lock->holder->priority;
+      lock->holder->priority = cur_priority;
+    }
   }
-  
 
   intr_set_level(old_level);
+  sema_down (&(lock->semaphore));
+  lock->holder = thread_current ();
+
+  
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
