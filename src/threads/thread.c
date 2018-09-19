@@ -200,9 +200,11 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
-  if(priority > thread_current()->priority)
-    thread_yield();
   
+  if(priority > thread_current()->priority){
+    thread_yield();
+    // printf("%d , %d\n", t->tid, thread_current()->tid);
+  }
   return tid;
 }
 
@@ -318,7 +320,11 @@ thread_yield (void)
 void
 thread_set_priority (int new_priority) 
 {
+  enum intr_level olev = intr_disable();
   thread_current ()->priority = new_priority;
+  thread_current()->actual_priority = new_priority;
+  thread_yield();
+  intr_set_level(olev);
 }
 
 /* Returns the current thread's priority. */
@@ -493,9 +499,14 @@ next_thread_to_run (void)
 
     // return next_thread;
     
-    struct list_elem *e = list_max(&ready_list, compare_priority, NULL);    
+    enum intr_level old_level = intr_disable();
+
+    struct list_elem *e = list_max(&ready_list, compare_priority, NULL); 
+    list_remove(e);  
     struct thread *next_thread = list_entry(e, struct thread, elem);    
-    list_remove(e);
+    
+
+    intr_set_level(old_level);
 
     return next_thread;
 

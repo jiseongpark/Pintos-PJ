@@ -70,6 +70,7 @@ sema_down (struct semaphore *sema)
 
   while (sema->value == 0) 
     {
+      // printf("%d, %d# \n",thread_current()->priority, thread_current()->tid);
       list_push_back (&(sema->waiters), &(thread_current ()->elem));
       thread_block ();
     }
@@ -136,12 +137,14 @@ sema_up (struct semaphore *sema)
     struct list_elem *e = list_max(&sema->waiters, compare_priority, NULL);
     struct thread *wake_thread = list_entry(e, struct thread, elem);
     list_remove(e);
+    // printf("%d$\n", wake_thread->priority);
     thread_unblock( wake_thread );
     
 
     //thread_unblock(list_entry(list_pop_front(&sema->waiters), struct thread, elem));
   }
   sema->value++;
+  thread_yield();
   intr_set_level (old_level);
 }
 
@@ -221,22 +224,22 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
-  // enum intr_level old_level = intr_disable();
+  enum intr_level old_level = intr_disable();
 
   sema_down (&(lock->semaphore));
-  lock->holder = thread_current ();
-
+  lock->holder = thread_current ();   
   struct list_elem *e = list_max(&(lock->semaphore.waiters), compare_priority, NULL);
   int cur_priority = thread_current()->priority;
   int max_priority = list_entry(e, struct thread, elem)->priority;
   
   if(!list_empty(&(lock->semaphore.waiters)))
   {
-    
+   
     if( thread_get_priority() < max_priority )
     {
-      thread_set_priority( max_priority );
-      thread_current()->actual_priority = cur_priority;
+
+      thread_current()->priority = max_priority;
+
 
     }
 
@@ -244,7 +247,7 @@ lock_acquire (struct lock *lock)
   }
   
 
-  // intr_set_level(old_level);
+  intr_set_level(old_level);
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -278,7 +281,6 @@ lock_release (struct lock *lock)
 {
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
-  
   if( lock->holder->priority != lock->holder->actual_priority ){
     lock->holder->priority = lock->holder->actual_priority;
   }
