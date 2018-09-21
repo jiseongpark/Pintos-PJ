@@ -449,8 +449,12 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
-  t->actual_priority = priority;
   t->magic = THREAD_MAGIC;
+
+  t->actual_priority = priority;
+  t->wait_release = NULL;
+  list_init(&t->holding_locks);
+  t->donation_flag = false;
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -478,27 +482,6 @@ next_thread_to_run (void)
     return idle_thread;
   else
   {
-    // struct list_elem *e = list_begin(&ready_list);  /* Iteration pointer */  
-    // struct list_elem *temp_e = list_begin(&ready_list);  /* Saved high priority element */
-    // struct thread *next_thread = list_entry(list_begin(&ready_list), struct thread, elem);  /* Saved high priority thread */
-
-    // /* Iterating loop, update next_thread, temp_e with higher priority */
-    // for( ; e != list_end(&ready_list); e = list_next(e))
-    // {
-    //   struct thread *temp_t = list_entry(e, struct thread, elem);
-
-    //   if(temp_t->priority > next_thread->priority)
-    //   {
-    //     next_thread = temp_t;
-    //     temp_e = e;
-    //   }
-    // }
-
-    // /* Remove next thread to run from the ready list */
-    // list_remove(temp_e);
-
-    // return next_thread;
-    
     enum intr_level old_level = intr_disable();
 
     struct list_elem *e = list_max(&ready_list, compare_priority, NULL); 
@@ -517,6 +500,23 @@ next_thread_to_run (void)
 bool compare_priority(struct list_elem* max, struct list_elem* e, void* aux){
   return list_entry(max, struct thread,elem)->priority < list_entry(e, struct thread, elem)->priority;
 }
+
+void priority_donation(struct thread *donor)
+{
+  enum intr_level old_level;
+  struct thread *recipient = donor->wait_release;
+
+  old_level = intr_disable();
+  if( recipient != NULL && donor->priority > recipient->priority && donor->donation_flag == false )
+  {   
+    recipient->priority = donor->priority;
+    priority_donation(recipient);
+    recipient->donation_flag = true;
+  }
+  intr_set_level(old_level);
+}
+
+
 
 /* Completes a thread switch by activating the new thread's page
    tables, and, if the previous thread is dying, destroying it.

@@ -104,6 +104,10 @@ struct thread
 
     int64_t sleep_time;                 /* Saved time to wake up */
 
+    struct thread *wait_release;        /* thread which is waiting for release */
+
+    struct list holding_locks;          /* list of locks that the thread currently holding */
+    bool donation_flag;
   };
 
 /* If false (default), use round-robin scheduler.
@@ -139,5 +143,7 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 bool compare_priority(struct list_elem* max, struct list_elem* e, void* aux);
+void priority_donation(struct thread *donor);
+
 
 #endif /* threads/thread.h */
