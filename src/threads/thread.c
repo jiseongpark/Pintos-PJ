@@ -321,7 +321,11 @@ void
 thread_set_priority (int new_priority) 
 {
   enum intr_level olev = intr_disable();
-  thread_current ()->priority = new_priority;
+
+  /* the priority should not be changed when the thread received the donation */
+  if(thread_current()->priority == thread_current()->actual_priority)
+    thread_current ()->priority = new_priority;
+
   thread_current()->actual_priority = new_priority;
   thread_yield();
   intr_set_level(olev);
@@ -500,6 +504,9 @@ next_thread_to_run (void)
 bool compare_priority(struct list_elem* max, struct list_elem* e, void* aux){
   return list_entry(max, struct thread,elem)->priority < list_entry(e, struct thread, elem)->priority;
 }
+
+
+
 
 void priority_donation(struct thread *donor)
 {
