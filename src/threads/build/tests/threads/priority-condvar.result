@@ -1,5 +1,1 @@
-FAIL
-Kernel panic in run: PANIC at ../../threads/interrupt.c:373 in intr_handler(): Unexpected interrupt
-Call stack: 0xc002fe24
-Translation of call stack:
-0xc002fe24: (unknown)
+PASS

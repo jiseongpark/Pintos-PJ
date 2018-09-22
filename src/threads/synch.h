@@ -32,6 +32,8 @@ bool lock_try_acquire (struct lock *);
 void lock_release (struct lock *);
 bool lock_held_by_current_thread (const struct lock *);
 void priority_rollback(struct lock *lock);
+bool compare_semaelem(struct list_elem* max, struct list_elem* e, void* aux);
+
 
 /* Condition variable. */
 struct condition 
