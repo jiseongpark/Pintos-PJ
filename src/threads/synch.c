@@ -119,30 +119,10 @@ sema_up (struct semaphore *sema)
   struct thread *wake_thread;
   if (!list_empty (&sema->waiters)) 
   {
-    
-    // struct list_elem *e = list_begin(&sema->waiters);
-    // struct list_elem *temp_e = list_begin(&sema->waiters);
-    // struct thread *unblocker = list_entry(list_begin(&sema->waiters), struct thread, elem);
-
-    // for( ; e != list_end(&sema->waiters); e = list_next(e))
-    // {
-    //   struct thread *temp_t = list_entry(e, struct thread, elem);
-
-    //   if(temp_t->priority > unblocker->priority)
-    //   {
-    //     unblocker = temp_t;
-    //     temp_e = e;
-    //   }
-    // }
-
     e = list_max(&sema->waiters, compare_priority, NULL);
     wake_thread = list_entry(e, struct thread, elem);
     list_remove(e);
-    // printf("%d$\n", wake_thread->priority);
     thread_unblock( wake_thread );
-    
-
-    //thread_unblock(list_entry(list_pop_front(&sema->waiters), struct thread, elem));
   }
   sema->value++;
   if( wake_thread->priority > thread_current()->priority)
@@ -197,15 +177,14 @@ void priority_rollback(struct lock *lock){
 
   if(list_empty(&lock->holder->holding_locks)) 
     next_priority = lock->holder->actual_priority;    
-  
+
   else if(!list_empty(&lock->holder->holding_locks))
   {
     struct list_elem *current = list_begin(&lock->holder->holding_locks);
 
     for(; current != list_end(&lock->holder->holding_locks); current = list_next(current))
     {
-      struct lock *cur = list_entry(current, struct lock, elem);
-      // if(list_empty(&cur->semaphore.waiters)) continue;
+      struct lock *cur = list_entry(current, struct lock, elem);      
 
       temp = list_entry(list_max(&cur->semaphore.waiters, compare_priority, NULL)
         ,struct thread, elem)->priority;

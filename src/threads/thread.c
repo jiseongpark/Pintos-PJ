@@ -203,7 +203,6 @@ thread_create (const char *name, int priority,
   
   if(priority > thread_current()->priority){
     thread_yield();
-    // printf("%d , %d\n", t->tid, thread_current()->tid);
   }
   return tid;
 }
@@ -514,7 +513,7 @@ void priority_donation(struct thread *donor)
   struct thread *recipient = donor->wait_release;
 
   old_level = intr_disable();
-  if( recipient != NULL && donor->priority > recipient->priority && donor->donation_flag == false )
+  if( recipient != NULL && donor->priority > recipient->priority )
   {   
     recipient->priority = donor->priority;
     priority_donation(recipient);
